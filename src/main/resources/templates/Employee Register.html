@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <style>
+        body {
+            background-image: url('/images/black.png');
+            background-size: cover;
+            background-position: center;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #registrationContainer {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center; /* Center align the form elements */
+            margin-top: 50px; /* Add margin to push it down */
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0; /* Remove default margin */
+            margin-bottom: 20px; /* Add some bottom margin */
+        }
+
+        label {
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        button {
+            width: 100%;
+            padding: 5px 10px; /* Adjust padding for thinner line */
+            margin-bottom: 5px;
+            border: none; /* Remove border */
+            border-bottom: 1px solid #ccc; /* Add bottom border */
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        button {
+            background-color: steelblue;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: royalblue;
+        }
+
+        .role-select {
+            display: inline-block;
+            margin-left: 10px; /* Adjust margin as needed */
+        }
+         p {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        p a {
+            color: royalblue;
+            text-decoration: none;
+        }
+
+        p a:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+<div id="registrationContainer">
+    <h1> Sign Up</h1>
+    <form id="registrationForm">
+        <!-- Full Name -->
+        <label>
+            <span style="margin-right: 5px;">👤</span>
+            <input type="text" id="name" name="name" placeholder="Full Name" required><br><br>
+        </label><br><br>
+
+
+        <!-- Email -->
+        <label>
+            <span style="margin-right: 5px;">📧</span>
+            <input type="email" id="email" name="email" placeholder="Email" required><br><br>
+        </label><br><br>
+
+
+        <!-- Password -->
+        <label>
+            <span style="margin-right: 5px;">🔒</span>
+            <input type="password" id="password" name="password" placeholder="Password" required><br><br>
+        </label><br><br>
+
+
+        <!-- Role -->
+        <div class="role-select">
+            <select id="role" name="role">
+                <option value="">Select Role</option>
+                <option value="ADMINISTRATOR">👨‍💼 ADMINISTRATOR</option>
+                <option value="HEAD_OF_DEPARTMENT">👩‍🏫 HEAD OF DEPARTMENT</option>
+                <option value="DRIVER">🚗 DRIVER</option>
+                <option value="HUMAN_RESOURCES">🏢 HUMAN RESOURCES</option>
+            </select>
+        </div><br><br>
+        <button type="submit">Sign up</button>
+    </form>
+    <p> Already have an account? <a href="/api/v1/employee/employee-login">Sign in</a> </p>
+
+</div>
+
+
+<script>
+    document.getElementById("registrationForm").addEventListener("submit", function(event) {
+             event.preventDefault();
+             let formData = {
+                  name: document.getElementById("name").value,
+                  email: document.getElementById("email").value,
+                  password: document.getElementById("password").value,
+                  role: document.getElementById("role").value
+
+             };
+             fetch('http://localhost:8085/api/v1/employee/save', {
+                 method: 'POST',
+                 headers: {
+                      'Content-Type':'application/json',
+                 },body: JSON.stringify(formData),
+             })
+             .then(response => response.text())
+             .then(data => {
+                   console.log(data);
+                   alert("Sign up successfully");
+                   // Redirect to login page after successful registration
+                   window.location.href = "/api/v1/employee/employee-login";
+             })
+             .catch((error) => {
+                 console.error('Error:', error);
+             });
+         });
+
+    // Add event listeners to show labels when input fields are focused
+    const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]');
+    inputs.forEach(input => {
+        input.addEventListener('focus', () => {
+            input.previousElementSibling.style.display = 'block';
+        });
+    });
+</script>
+
+</body>
+</html>

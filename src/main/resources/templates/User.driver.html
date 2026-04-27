@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('/images/black.png'); /* Add your background image URL here */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Keeps the background image fixed while scrolling */
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: white;
+        }
+
+        a {
+            display: inline-block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #0056b3;
+        }
+
+        .requisition-form {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        .requisition-form p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .requisition-form hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+
+        /* Style for input fields */
+        input[type="time"],
+        input[type="date"],
+        input[type="number"] {
+            width: calc(100% - 20px); /* Adjust input width */
+            padding: 8px; /* Adjust input padding */
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .print-button,
+         .update-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .print-button:hover,
+         .update-button:hover {
+            background-color: #218838;
+        }
+
+        /* Status colors */
+        .status {
+            font-weight: bold;
+        }
+
+        .status.approved {
+            color: green;
+        }
+
+        .status.rejected {
+            color: red;
+        }
+
+        .status.pending-hod {
+            color: blue;
+        }
+
+        .status.pending-hr {
+            color: blue;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            .printable-content, .printable-content * {
+                visibility: visible;
+            }
+
+            .printable-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<h1>Driver</h1>
+
+<!-- Link to create new requisition -->
+<a href="http://localhost:8085/api/v1/requisitionForms/requisition-form">Create New Requisition Form</a>
+
+<hr>
+
+<!-- Container to display requisition forms -->
+<h2>Submitted Requisition Forms</h2>
+<div id="requisitionForms" class="requisition-form"></div>
+
+<!-- Logout button -->
+<a href="#" onclick="logout()" style="background-color: #dc3545;">Logout</a>
+
+<script>
+    // Function to fetch requisition forms from the backend
+    function fetchRequisitionForms() {
+        fetch('http://localhost:8085/api/v1/drivers/requisitionForms')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch requisition forms');
+                }
+                return response.json();
+            })
+            .then(requisitionForms => {
+                displayRequisitionForms(requisitionForms);
+            })
+            .catch(error => {
+                console.error('Error fetching requisition forms:', error);
+                // Display error message on the page
+                document.getElementById("requisitionForms").innerHTML = "<p>Error fetching requisition forms. Please try again later.</p>";
+            });
+    }
+
+    // Function to display requisition forms on the page
+    function displayRequisitionForms(requisitionForms) {
+        // Clear previous content
+        document.getElementById("requisitionForms").innerHTML = "";
+
+        // Create HTML for displaying requisition forms
+        requisitionForms.forEach(requisitionForm => {
+            // Format time to HH:mm format
+            const formattedTimeIn = requisitionForm.timeIn ? requisitionForm.timeIn.substring(0, 5) : '';
+
+            // Determine status class based on requisition status
+            let statusClass = '';
+            switch (requisitionForm.overallStatus) {
+                case 'APPROVED':
+                    statusClass = 'approved';
+                    break;
+                case 'REJECTED':
+                    statusClass = 'rejected';
+                    break;
+                case 'PENDING_HOD_APPROVAL':
+                    statusClass = 'pending-hod';
+                    break;
+                case 'PENDING_HR_APPROVAL':
+                    statusClass = 'pending-hr';
+                    break;
+                default:
+                    statusClass = ''; // Default case, no specific class
+            }
+
+            // Create requisition form HTML
+            const requisitionFormHTML = `
+                <div class="requisition" id="requisition_${requisitionForm.requisitionFormId}">
+                    <p><strong>Requisition ID:</strong> ${requisitionForm.requisitionFormId}</p>
+                    <p><strong>Destination:</strong> ${requisitionForm.destination}</p>
+                    <p><strong>Time Out:</strong> ${requisitionForm.timeOut}</p>
+                    <p><strong>Date Out:</strong> ${requisitionForm.dateOut}</p>
+                    <p><strong>Fuel Out:</strong> ${requisitionForm.fuelOut}</p>
+                    <p><strong>Mileage Out:</strong> ${requisitionForm.mileageOut}</p>
+                    <p><strong>Purpose:</strong> ${requisitionForm.purpose}</p>
+                    <p><strong>Vehicle Registration Number:</strong> ${requisitionForm.vehicleRegistrationNumber}</p>
+                    <p><strong>Department Name:</strong> ${requisitionForm.departmentName}</p>
+                    <p><strong>Driver Name:</strong> ${requisitionForm.driverName}</p>
+                    <p><strong>Status:</strong> <span class="status ${statusClass}">${requisitionForm.overallStatus}</span></p>
+                    <div>
+                        <label for="timeIn_${requisitionForm.requisitionFormId}">Time In:</label>
+                        <input type="time" id="timeIn_${requisitionForm.requisitionFormId}" value="${formattedTimeIn}">
+                    </div>
+                    <div>
+                        <label for="dateIn_${requisitionForm.requisitionFormId}">Date In:</label>
+                        <input type="date" id="dateIn_${requisitionForm.requisitionFormId}" value="${requisitionForm.dateIn}">
+                    </div>
+                    <div>
+                        <label for="fuelIn_${requisitionForm.requisitionFormId}">Fuel In:</label>
+                        <input type="number" id="fuelIn_${requisitionForm.requisitionFormId}" value="${requisitionForm.fuelIn}">
+                    </div>
+                    <div>
+                        <label for="mileageIn_${requisitionForm.requisitionFormId}">Mileage In:</label>
+                        <input type="number" id="mileageIn_${requisitionForm.requisitionFormId}" value="${requisitionForm.mileageIn}">
+                    </div>
+                    <button class="print-button" onclick="printRequisitionForm(${requisitionForm.requisitionFormId})">Print Details</button>
+                    <button class="update-button" onclick="updateRequisitionForm(${requisitionForm.requisitionFormId})">Update Form</button>
+                    <hr>
+                </div>
+            `;
+
+            // Append requisition form HTML to container
+            document.getElementById("requisitionForms").innerHTML += requisitionFormHTML;
+        });
+    }
+
+    // Function to update requisition form details
+function updateRequisitionForm(formId) {
+    const updateTimeIn = document.getElementById(`timeIn_${formId}`).value;
+    const updateDateIn = document.getElementById(`dateIn_${formId}`).value;
+    const updateFuelIn = document.getElementById(`fuelIn_${formId}`).value;
+    const updateMileageIn = document.getElementById(`mileageIn_${formId}`).value;
+
+    const updatedFormDto = {
+        timeIn: updateTimeIn,
+        dateIn: updateDateIn,
+        fuelIn: updateFuelIn,
+        mileageIn: updateMileageIn
+    };
+
+    fetch(`http://localhost:8085/api/v1/requisitionForms/${formId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormDto),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to update requisition form');
+        }
+        return response.json();
+    })
+    .then(updatedForm => {
+        // Handle success message or action
+        console.log('Requisition form updated successfully:', updatedForm);
+        alert('Requisition form updated successfully'); // Example: show an alert
+        // Fetch and display updated list of requisition forms
+        fetchRequisitionForms();
+    })
+    .catch(error => {
+        console.error('Error updating requisition form:', error);
+        // Display error message on the page if needed
+        alert('Failed to update requisition form'); // Example: show an alert
+    });
+}
+
+
+    // Function to print requisition form details
+    function printRequisitionForm(requisitionFormId) {
+        // Find the requisition form with the given ID
+        const requisitionForm = document.getElementById(`requisition_${requisitionFormId}`);
+        if (!requisitionForm) {
+            console.error(`Requisition form with ID ${requisitionFormId} not found.`);
+            return;
+        }
+
+        // Hide non-printable elements
+        document.body.innerHTML = `
+            <div class="printable-content">
+                ${requisitionForm.innerHTML}
+            </div>
+        `;
+
+        // Print the contents
+        window.print();
+
+        // Reload the original page content after printing
+        location.reload();
+    }
+
+    // Function to logout and redirect to the login page
+    function logout() {
+        window.location.href = 'http://localhost:8085/api/v1/employee/employee-login';
+    }
+
+    // Fetch requisition forms when the page loads
+    fetchRequisitionForms();
+</script>
+</body>
+</html>

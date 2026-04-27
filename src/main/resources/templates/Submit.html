@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Submission</title>
+    <style>
+        body {
+            background-image: url('/images/black.png');
+            background-size: cover;
+            background-position: center;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-container h2 {
+            margin-top: 0;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        button {
+            width: 100%;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-bottom: 1px solid #ccc;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        button {
+            background-color: steelblue;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: royalblue;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .requisition-form {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            width: 300px;
+        }
+
+        .requisition-form p {
+            margin: 5px 0;
+        }
+
+        /* Status colors */
+        .status {
+            font-weight: bold;
+        }
+
+        .status.approved {
+            color: green;
+        }
+
+        .status.rejected {
+            color: red;
+        }
+
+        .status.pending-hod {
+            color: blue;
+        }
+
+        .status.pending-hr {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+<div class="form-container">
+    <h2>Submit Form for HOD Approval</h2>
+    <form id="hodApprovalForm">
+        <label for="formId">Form ID:</label>
+        <input type="text" id="formId" name="formId" required>
+        <button type="submit">Submit</button>
+    </form>
+</div>
+<div class="result" id="result"></div>
+
+<div id="requisitionForms"></div>
+
+<script>
+    document.getElementById('hodApprovalForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const formId = document.getElementById('formId').value;
+        const resultDiv = document.getElementById('result');
+
+        fetch(`http://localhost:8085/api/v1/requisitionForms/${formId}/submitForHODApproval`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ formId: formId })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Form submission failed');
+            }
+        })
+        .then(data => {
+            resultDiv.innerHTML = `<p class="success">Form submitted successfully!</p>`;
+            resultDiv.className = 'result success';
+            resultDiv.style.display = 'block';
+            setTimeout(function() {
+                window.location.href = 'http://localhost:8085/api/v1/drivers/user-driver';
+            }, 2000); // 2-second delay before redirecting
+        })
+        .catch(error => {
+            resultDiv.innerHTML = `<p class="error">${error.message}</p>`;
+            resultDiv.className = 'result error';
+            resultDiv.style.display = 'block';
+        });
+    });
+
+    function fetchRequisitionForms() {
+        fetch('http://localhost:8085/api/v1/drivers/requisitionForms')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch requisition forms');
+                }
+                return response.json();
+            })
+            .then(requisitionForms => {
+                displayRequisitionForms(requisitionForms);
+            })
+            .catch(error => {
+                console.error('Error fetching requisition forms:', error);
+                document.getElementById("requisitionForms").innerHTML = "<p>Error fetching requisition forms. Please try again later.</p>";
+            });
+    }
+
+    function displayRequisitionForms(requisitionForms) {
+        const container = document.getElementById("requisitionForms");
+        container.innerHTML = "";
+
+        const requisitionFormsHTML = requisitionForms.map(requisitionForm => {
+            let statusClass = '';
+            switch (requisitionForm.overallStatus) {
+                case 'APPROVED':
+                    statusClass = 'approved';
+                    break;
+                case 'REJECTED':
+                    statusClass = 'rejected';
+                    break;
+                case 'PENDING_HOD_APPROVAL':
+                    statusClass = 'pending-hod';
+                    break;
+                case 'PENDING_HR_APPROVAL':
+                    statusClass = 'pending-hr';
+                    break;
+                default:
+                    statusClass = '';
+                    break;
+            }
+
+            return `
+                <div class="requisition-form">
+                    <p><strong>Requisition ID:</strong> ${requisitionForm.requisitionFormId}</p>
+                    <p><strong>Destination:</strong> ${requisitionForm.destination}</p>
+                    <p><strong>Purpose:</strong> ${requisitionForm.purpose}</p>
+                    <p><strong>Driver Name:</strong> ${requisitionForm.driverName}</p>
+                    <p><strong>Status:</strong> <span class="status ${statusClass}">${requisitionForm.overallStatus}</span></p>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = requisitionFormsHTML;
+    }
+
+    fetchRequisitionForms();
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requisition Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        input[type="date"],
+        input[type="number"] {
+            width: calc(100% - 12px);
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .icon {
+            margin-right: 5px;
+            font-size: 18px;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<h1>Requisition Form</h1>
+
+<form id="createForm">
+    <label for="destination"><i class="icon">📍</i>Destination:</label>
+    <input type="text" id="destination" name="destination" required>
+
+    <label for="dateIn"><i class="icon">📅</i>Date In:</label>
+    <input type="date" id="dateIn" name="dateIn" required>
+
+    <label for="timeIn"><i class="icon">⏰</i>Time In:</label>
+    <input type="time" id="timeIn" name="timeIn" required>
+
+    <label for="dateOut"><i class="icon">📅</i>Date Out:</label>
+    <input type="date" id="dateOut" name="dateOut" required>
+
+    <label for="timeOut"><i class="icon">⏰</i>Time Out:</label>
+    <input type="time" id="timeOut" name="timeOut" required>
+
+    <label for="fuelIn"><i class="icon">⛽️</i>Fuel In:</label>
+    <input type="number" step="0.1" id="fuelIn" name="fuelIn" required>
+
+    <label for="fuelOut"><i class="icon">⛽️</i>Fuel Out:</label>
+    <input type="number" step="0.1" id="fuelOut" name="fuelOut" required>
+
+    <label for="mileageOut"><i class="icon">🚗</i>Mileage Out:</label>
+    <input type="number" id="mileageOut" name="mileageOut" required>
+
+    <label for="mileageIn"><i class="icon">🚗</i>Mileage In:</label>
+    <input type="number" id="mileageIn" name="mileageIn" required>
+
+    <label for="purpose"><i class="icon">📝</i>Purpose:</label>
+    <input type="text" id="purpose" name="purpose" required>
+
+    <label for="vehicleRegistrationNumber"><i class="icon">🚗</i>Vehicle Registration Number:</label>
+    <input type="text" id="vehicleRegistrationNumber" name="vehicleRegistrationNumber" required>
+
+    <label for="departmentName"><i class="icon">🏢</i>Department Name:</label>
+    <input type="text" id="departmentName" name="departmentName" required>
+
+    <label for="driverName"><i class="icon">👨‍✈️</i>Driver Name:</label>
+    <input type="text" id="driverName" name="driverName" required>
+
+    <button type="submit">Create Form</button>
+</form>
+
+<script>
+    document.getElementById('createForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Helper function to parse numbers correctly
+        function parseNumber(input) {
+            return parseFloat(input);
+        }
+
+        // Create form data object
+        const formData = {
+            destination: document.getElementById('destination').value,
+            dateIn: document.getElementById('dateIn').value,
+            timeIn: document.getElementById('timeIn').value,
+            dateOut: document.getElementById('dateOut').value,
+            timeOut: document.getElementById('timeOut').value,
+            fuelIn: parseNumber(document.getElementById('fuelIn').value),
+            fuelOut: parseNumber(document.getElementById('fuelOut').value),
+            mileageOut: parseInt(document.getElementById('mileageOut').value),
+            mileageIn: parseInt(document.getElementById('mileageIn').value),
+            purpose: document.getElementById('purpose').value,
+            vehicleRegistrationNumber: document.getElementById('vehicleRegistrationNumber').value,
+            departmentName: document.getElementById('departmentName').value,
+            driverName: document.getElementById('driverName').value,
+        };
+
+        // Send form data to backend API
+        fetch('http://localhost:8085/api/v1/requisitionForms/createForm', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Form created successfully');
+                // Optionally, you can redirect the user or perform other actions
+                window.location.href = 'http://localhost:8085/api/v1/requisitionForms/submit-form';
+            } else {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || 'Failed to create form');
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    });
+</script>
+</body>
+</html>

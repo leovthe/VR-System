@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anomaly Detection</title>
+    <style>
+        body {
+            background-image: url('/images/black.png');
+            background-size: cover;
+            background-position: center;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #anomalyContainer {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            width: 900px; /* Increased width */
+            height: 600px; /* Increased height */
+            text-align: center;
+            overflow-y: auto; /* Add vertical scroll if needed */
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: normal;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: steelblue;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            background-color: steelblue;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: royalblue;
+        }
+
+        p {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        p a {
+            color: royalblue;
+            text-decoration: none;
+        }
+
+        p a:hover {
+            text-decoration: underline;
+        }
+
+        .no-anomalies-message {
+            display: none;
+            color: green;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="anomalyContainer">
+    <h1>Anomaly Detection</h1>
+    <button onclick="detectAnomalies()">Detect Anomalies</button>
+
+    <!-- Table to Display Anomalies -->
+    <table id="anomaliesTable" border="1">
+        <thead>
+        <tr>
+            <th>Destination</th>
+            <th>Mileage Out</th>
+            <th>Mileage In</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+            <th>Date In</th>
+            <th>Date Out</th>
+            <th>Purpose</th>
+            <th>Vehicle Registration Number</th>
+            <th>Driver Name</th>
+        </tr>
+        </thead>
+        <tbody id="anomaliesBody">
+        <!-- Anomalies will be dynamically added here -->
+        </tbody>
+    </table>
+
+    <!-- No Anomalies Found Message -->
+    <p id="noAnomaliesMessage" class="no-anomalies-message">No anomalies detected.</p>
+
+    <script>
+        // Function to detect anomalies
+        function detectAnomalies() {
+            fetch('/api/v1/requisitionForms/detectAnomalies')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(anomalies => {
+                console.log('Anomalies detected:', anomalies);
+                let anomaliesBody = document.getElementById('anomaliesBody');
+                anomaliesBody.innerHTML = ''; // Clear existing rows
+
+                if (anomalies.length === 0) {
+                    document.getElementById('noAnomaliesMessage').style.display = 'block';
+                } else {
+                    document.getElementById('noAnomaliesMessage').style.display = 'none';
+                    anomalies.forEach(anomaly => {
+                        let row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${anomaly.destination}</td>
+                            <td>${anomaly.mileageOut}</td>
+                            <td>${anomaly.mileageIn}</td>
+                            <td>${anomaly.timeIn}</td>
+                            <td>${anomaly.timeOut}</td>
+                            <td>${anomaly.dateIn}</td>
+                            <td>${anomaly.dateOut}</td>
+                            <td>${anomaly.purpose}</td>
+                            <td>${anomaly.vehicleRegistrationNumber}</td>
+                            <td>${anomaly.driverName}</td>
+                        `;
+                        anomaliesBody.appendChild(row);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error detecting anomalies:', error);
+                // Optionally show error message to user
+            });
+        }
+    </script>
+</div>
+</body>
+</html>

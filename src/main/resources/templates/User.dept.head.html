@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Head Department</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+            background-image: url('/images/black.png');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: white;
+        }
+
+        #requisitionForms {
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        .requisition-form {
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            color: #000; /* Text color inside the form */
+        }
+
+        .requisition-form p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .requisition-form button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .requisition-form button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Logout Button Styles */
+        .logout-button {
+            display: block;
+            margin: 20px auto;
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-align: center;
+            width: 200px;
+        }
+
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+
+        /* Status colors */
+        .status {
+            font-weight: bold;
+        }
+
+        .status.approved {
+            color: green;
+        }
+
+        .status.rejected {
+            color: red;
+        }
+
+        .status.pending-hod {
+            color: blue;
+        }
+
+        .status.pending-hr {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+<h1>Dept Head</h1>
+
+<h2>Requisition Forms</h2>
+
+<div id="requisitionForms">
+    <!-- Requisition forms will be displayed here -->
+</div>
+
+<button class="logout-button" onclick="logout()">Logout</button>
+
+<script>
+    // Function to fetch requisition forms from the backend
+    function fetchRequisitionForms() {
+        fetch('http://localhost:8085/api/v1/drivers/requisitionForms')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch requisition forms');
+                }
+                return response.json();
+            })
+            .then(requisitionForms => {
+                displayRequisitionForms(requisitionForms);
+            })
+            .catch(error => {
+                console.error('Error fetching requisition forms:', error);
+                // Display error message on the page
+                document.getElementById("requisitionForms").innerHTML = "<p>Error fetching requisition forms. Please try again later.</p>";
+            });
+    }
+
+    // Function to display requisition forms on the page
+    function displayRequisitionForms(requisitionForms) {
+        // Clear previous content
+        document.getElementById("requisitionForms").innerHTML = "";
+
+        // Create HTML for displaying requisition forms
+        const requisitionFormsHTML = requisitionForms.map(requisitionForm => {
+            // Determine status class based on requisition status
+            let statusClass = '';
+            switch (requisitionForm.overallStatus) {
+                case 'APPROVED':
+                    statusClass = 'approved';
+                    break;
+                case 'REJECTED':
+                    statusClass = 'rejected';
+                    break;
+                case 'PENDING_HOD_APPROVAL':
+                    statusClass = 'pending-hod';
+                    break;
+                case 'PENDING_HR_APPROVAL':
+                    statusClass = 'pending-hr';
+                    break;
+                default:
+                    statusClass = ''; // Default case, no specific class
+            }
+
+            return `
+                <div class="requisition-form" id="requisitionForm_${requisitionForm.requisitionFormId}">
+                    <p><strong>Requisition ID:</strong> ${requisitionForm.requisitionFormId}</p>
+                    <p><strong>Destination:</strong> ${requisitionForm.destination}</p>
+                    <p><strong>Purpose:</strong> ${requisitionForm.purpose}</p>
+                    <p><strong>Driver Name:</strong> ${requisitionForm.driverName}</p>
+                    <p><strong>Status:</strong> <span class="status ${statusClass}">${requisitionForm.overallStatus}</span></p>
+
+                    <button onclick="approveRequisition(${requisitionForm.requisitionFormId})">Approve</button>
+                    <button onclick="rejectRequisition(${requisitionForm.requisitionFormId})">Reject</button>
+                </div>
+            `;
+        }).join('');
+
+        // Append HTML to the container
+        document.getElementById("requisitionForms").innerHTML = requisitionFormsHTML;
+    }
+
+    // Function to approve a requisition form
+    function approveRequisition(id) {
+        fetch(`http://localhost:8085/api/v1/requisitionForms/${id}/approveByHOD`, {
+            method: 'PUT'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to approve requisition form');
+            }
+            return response.json();
+        })
+        .then(updatedRequisitionForm => {
+            // Update the status of the requisition form to 'Approved' in the UI
+            const requisitionFormElement = document.getElementById(`requisitionForm_${id}`);
+            requisitionFormElement.querySelector('.status').innerText = updatedRequisitionForm.overallStatus;
+            requisitionFormElement.querySelector('.status').classList.add('approved');
+        })
+        .catch(error => {
+            console.error('Error approving requisition form:', error);
+            // Display error message on the page
+            alert('Failed to approve requisition form. Please try again later.');
+        });
+    }
+
+    // Function to reject a requisition form
+    function rejectRequisition(id) {
+        fetch(`http://localhost:8085/api/v1/requisitionForms/${id}/rejectByHOD`, {
+            method: 'PUT'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to reject requisition form');
+            }
+            return response.json();
+        })
+        .then(updatedRequisitionForm => {
+            // Update the status of the requisition form to 'Rejected' in the UI
+            const requisitionFormElement = document.getElementById(`requisitionForm_${id}`);
+            requisitionFormElement.querySelector('.status').innerText = updatedRequisitionForm.overallStatus;
+            requisitionFormElement.querySelector('.status').classList.add('rejected');
+        })
+        .catch(error => {
+            console.error('Error rejecting requisition form:', error);
+            // Display error message on the page
+            alert('Failed to reject requisition form. Please try again later.');
+        });
+    }
+
+    // Function to log out and redirect to the login page
+    function logout() {
+        window.location.href = 'http://localhost:8085/api/v1/employee/employee-login';
+    }
+
+    // Fetch requisition forms when the page loads
+    fetchRequisitionForms();
+</script>
+</body>
+</html>
