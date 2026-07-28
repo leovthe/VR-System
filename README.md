@@ -48,4 +48,3 @@ This project is a development version and can be extended to cloud deployment in
 Author
 
 Bevan Paweni
-Bachelor of Commerce (Honours) in Data Science and Informatics
